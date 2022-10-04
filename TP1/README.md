@@ -417,17 +417,25 @@ Le but est de configurer votre firewall plutôt que de le désactiver
 
 🌞 **Activez et configurez votre firewall**
 
-- autoriser les `ping`
-  - configurer le firewall de votre OS pour accepter le `ping`
-  - aidez vous d'internet
-  - on rentrera dans l'explication dans un prochain cours mais sachez que `ping` envoie un message *ICMP de type 8* (demande d'ECHO) et reçoit un message *ICMP de type 0* (réponse d'écho) en retour
-- autoriser le traffic sur le port qu'utilise `nc`
-  - on parle bien d'ouverture de **port** TCP et/ou UDP
-  - on ne parle **PAS** d'autoriser le programme `nc`
-  - choisissez arbitrairement un port entre 1024 et 20000
-  - vous utiliserez ce port pour communiquer avec `netcat` par groupe de 2 toujours
-  - le firewall du *PC serveur* devra avoir un firewall activé et un `netcat` qui fonctionne
-  
+```
+Panneau de configuration\Système et sécurité\Pare-feu Windows Defender -> Paramètres avancés -> Règles du traffic entrant -> Nouvelle règle -> Port -> Protocole et ports -> Ports locaux spécifiques : 8888
+Ajout de l'adresse IP dans les propriétés de la règle
+```
+```
+PS C:\Windows\system32> ping 192.168.137.25
+
+Envoi d’une requête 'Ping'  192.168.137.25 avec 32 octets de données :
+Réponse de 192.168.137.25 : octets=32 temps=3 ms TTL=128
+Réponse de 192.168.137.25 : octets=32 temps=3 ms TTL=128
+Réponse de 192.168.137.25 : octets=32 temps=3 ms TTL=128
+Réponse de 192.168.137.25 : octets=32 temps=2 ms TTL=128
+
+Statistiques Ping pour 192.168.137.25:
+    Paquets : envoyés = 4, reçus = 4, perdus = 0 (perte 0%),
+Durée approximative des boucles en millisecondes :
+    Minimum = 2ms, Maximum = 3ms, Moyenne = 2ms
+```
+
 # III. Manipulations d'autres outils/protocoles côté client
 
 ## 1. DHCP
@@ -447,6 +455,14 @@ Une fois que le serveur DHCP vous a donné une IP, vous enregistrer un fichier a
 - cette adresse a une durée de vie limitée. C'est le principe du ***bail DHCP*** (ou *DHCP lease*). Trouver la date d'expiration de votre bail DHCP
 - vous pouvez vous renseigner un peu sur le fonctionnement de DHCP dans les grandes lignes. On aura un cours là dessus :)
 
+```
+PS C:\Windows\system32> ipconfig /all
+
+Carte réseau sans fil Wi-Fi :
+   Bail expirant. . . . . . . . . . . . . : mercredi 5 octobre 2022 13:30:06
+   Serveur DHCP . . . . . . . . . . . . . : 10.33.19.254
+```
+
 > Chez vous, c'est votre box qui fait serveur DHCP et qui vous donne une IP quand vous le demandez.
 
 ## 2. DNS
@@ -458,17 +474,56 @@ Un **serveur DNS** est un serveur à qui l'on peut poser des questions (= effect
 Si votre navigateur fonctionne "normalement" (il vous permet d'aller sur `google.com` par exemple) alors votre ordinateur connaît forcément l'adresse d'un serveur DNS. Et quand vous naviguez sur internet, il effectue toutes les requêtes DNS à votre place, de façon automatique.
 
 🌞** Trouver l'adresse IP du serveur DNS que connaît votre ordinateur**
+```
+PS C:\Windows\system32> ipconfig /all
 
+Carte réseau sans fil Wi-Fi :
+
+   Serveurs DNS. . .  . . . . . . . . . . : 8.8.8.8
+                                       8.8.4.4
+                                       1.1.1.1
+```
 🌞 Utiliser, en ligne de commande l'outil `nslookup` (Windows, MacOS) ou `dig` (GNU/Linux, MacOS) pour faire des requêtes DNS à la main
 
 - faites un *lookup* (*lookup* = "dis moi à quelle IP se trouve tel nom de domaine")
   - pour `google.com`
+```
+PS C:\Windows\system32> nslookup google.com
+
+Réponse ne faisant pas autorité :
+Nom :    google.com
+Addresses:  2a00:1450:4007:812::200e
+          142.250.179.78
+```
   - pour `ynov.com`
+```
+PS C:\Windows\system32> nslookup ynov.com
+
+Réponse ne faisant pas autorité :
+Nom :    ynov.com
+Addresses:  2606:4700:20::ac43:4ae2
+          2606:4700:20::681a:ae9
+          2606:4700:20::681a:be9
+          172.67.74.226
+          104.26.10.233
+          104.26.11.233
+```
   - interpréter les résultats de ces commandes
 - déterminer l'adresse IP du serveur à qui vous venez d'effectuer ces requêtes
 - faites un *reverse lookup* (= "dis moi si tu connais un nom de domaine pour telle IP")
   - pour l'adresse `78.73.21.21`
+```
+PS C:\Windows\system32> nslookup 78.73.21.21
+
+Nom :    78-73-21-21-no168.tbcn.telia.com
+Address:  78.73.21.21
+```
   - pour l'adresse `22.146.54.58`
+```
+PS C:\Windows\system32> nslookup 22.146.54.58
+
+*** dns.google ne parvient pas à trouver 22.146.54.58 : Non-existent domain
+```
   - interpréter les résultats
   - *si vous vous demandez, j'ai pris des adresses random :)*
 
@@ -494,8 +549,17 @@ Un peu austère aux premiers abords, une manipulation très basique permet d'avo
 🌞 Utilisez le pour observer les trames qui circulent entre vos deux carte Ethernet. Mettez en évidence :
 
 - un `ping` entre vous et votre passerelle
+
+![Ping](./pics/ping.png)
+
 - un `netcat` entre vous et votre mate, branché en RJ45
+
+![netcat](./pics/netcat.png)
+
 - une requête DNS. Identifiez dans la capture le serveur DNS à qui vous posez la question.
+
+![DNS](./pics/dns.png)
+
 - prenez moi des screens des trames en question
 - on va prendre l'habitude d'utiliser Wireshark souvent dans les cours, pour visualiser ce qu'il se passe
 
